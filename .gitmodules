@@ -1,0 +1,3 @@
+[submodule "tfnntools"]
+	path = tfnntools
+	url = git@github.com:nperraud/tfnntools.git
