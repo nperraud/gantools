@@ -1,0 +1,13 @@
+numpy
+tensorflow
+pillow
+h5py
+sklearn
+scikit-image
+pyyaml
+-e .
+-e tfnntools
+matplotlib
+jupyter
+moviepy
+requests
