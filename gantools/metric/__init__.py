@@ -6,4 +6,3 @@ The metric module contains all the function to compute the metrics for the gener
 
 from .core import *
 from . import ganlist
-from . import stats

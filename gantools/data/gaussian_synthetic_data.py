@@ -2,7 +2,7 @@ import numpy as np
 from scipy.stats import multivariate_normal
 from sklearn.datasets import make_spd_matrix as RAND_COV
 
-def generate_cube(cube_dim):
+def _generate_cube(cube_dim):
 	'''3D gaussians : x,y,z independent variables, f dependent variable
 	'''
 
@@ -29,14 +29,14 @@ def generate_cube(cube_dim):
 def generate_cubes(nsamples, cube_dim):
 	cubes = []
 	for i in range(nsamples):
-		cubes.append(generate_cube(cube_dim))
+		cubes.append(_generate_cube(cube_dim))
 
 	cubes = np.array(cubes)
 	cubes.resize([nsamples, cube_dim, cube_dim, cube_dim])
 	return cubes
 
 
-def generate_square(square_dim):
+def _generate_square(square_dim):
 	'''2D gaussians : x,y independent variables, f dependent variable
 	'''
 
@@ -63,7 +63,7 @@ def generate_square(square_dim):
 def generate_squares(nsamples, square_dim):
 	squares = []
 	for i in range(nsamples):
-		squares.append(generate_square(square_dim))
+		squares.append(_generate_square(square_dim))
 
 	squares = np.array(squares)
 	squares.resize([nsamples, square_dim, square_dim])

@@ -7,7 +7,7 @@ The data module contains all the function to preprocess, transform and load the 
  * tranformation : transformation for the data
 """
 
-from . import load
+from .core import * 
 from . import transformation
-from . import path
-from . import Dataset
+from .gaussian_synthetic_data import *
+
