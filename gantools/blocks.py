@@ -454,8 +454,8 @@ def conv3d(imgs,
     '''Convolutional layer for square images'''
     if not(isinstance(stride ,list) or isinstance(stride ,tuple)):
         stride = [stride, stride, stride]
-    if use_spectral_norm:
-        print("Warning spectral norm for conv3d set to True but may not be implemented!")
+#     if use_spectral_norm:
+#         print("Warning spectral norm for conv3d may not be implemented not correctly!")
 
     weights_initializer = select_initializer()
     const = tf.constant_initializer(0.0)

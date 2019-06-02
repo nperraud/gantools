@@ -10,4 +10,5 @@ The data module contains all the function to preprocess, transform and load the 
 from .core import * 
 from . import transformation
 from .gaussian_synthetic_data import *
+from . import fmap
 
