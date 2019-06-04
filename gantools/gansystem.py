@@ -147,6 +147,7 @@ class GANsystem(NNSystem):
             sum_batch = next(self.summary_dataset)
             sum_feed_dict = self._get_dict(**self._net.batch2dict(sum_batch))
             X_fake = self._generate_sample_safe(is_feed_dict=True, feed_dict=sum_feed_dict)
+            X_real = self._sess.run(self.net.X_real, feed_dict=sum_feed_dict)
             feed_dict = self.net.compute_summaries(X_real, X_fake, feed_dict)
         else:
             feed_dict = self.net.compute_summaries(X_real, X_fake, feed_dict)

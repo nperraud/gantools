@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 from gantools.plot.plot_summary import PlotSummaryLog, PlotSummaryPlot
-
+from .fd import compute_fd
 
 class TFsummaryHelper(object):
     """Helper class for tensorflow summaries."""
@@ -151,11 +151,29 @@ class Metric(TFsummaryHelper):
         return self._last_metric
     
 
+class SimpleMetric(Metric):
+    """Statistically based metric."""
 
+    def __init__(self, func, name, group=''):
+        """Initialize the StatisticalMetric.
+
+        Arguments
+        ---------
+        * func: function that compute a metric as func(real, fake)
+        * name: name of the metric
+        """
+        super().__init__(name, recompute_real=True, stype=0, group=group)
+
+        self._func = func
+    
+    def _compute(self, fake, real):
+        """Compute the metric."""
+        return self._func(real, fake)
+        
 class StatisticalMetric(Metric):
     """Statistically based metric."""
 
-    def __init__(self, statistic, order=2, log=False, normalize=False, wasserstein=False, **kwargs):
+    def __init__(self, statistic, order=2, log=False, normalize=False, type='norm', **kwargs):
         """Initialize the StatisticalMetric.
 
         Arguments
@@ -168,7 +186,10 @@ class StatisticalMetric(Metric):
         * normalize: normalize the metric (default False)
         * wasserstein: use the wasserstein metric
         """
-        name = statistic.name + '_l' + str(order)
+        if type=='norm':
+            name = statistic.name + '_l' + str(order)
+        else:
+            name = statistic.name + '_' + type
         if log:
             name += 'log'
         super().__init__(name, statistic.group, **kwargs)
@@ -177,7 +198,7 @@ class StatisticalMetric(Metric):
         self.statistic = statistic
         self._saved_stat = None
         self._normalize = normalize
-        self._wasserstein = wasserstein
+        self._type = type
 
     def preprocess(self, real, rerun=True):
         """Compute the statistic on the real data."""
@@ -190,8 +211,6 @@ class StatisticalMetric(Metric):
         self._saved_fake_stat = self.statistic(fake)
 
     def _compute(self, fake, real):
-        # The real is not vatiable is not used as the stat over real is
-        # computed only once
         # print("Compute summaries: "+self.group+'/'+self.name)
         self._compute_stats(fake, real)
         fake_stat = self._saved_fake_stat
@@ -205,8 +224,10 @@ class StatisticalMetric(Metric):
         if self._log:
             rs = 10*np.log10(rs + 1e-2)
             fs = 10*np.log10(fs + 1e-2)
-        if self._wasserstein:
+        if self._type == 'wasserstein':
             self._last_metric = wasserstein_distance(rs, fs, normalize=self._normalize, w=self._saved_real_stat[1])
+        elif self._type == 'fd':
+            self._last_metric = compute_fd(rs,fs)
         else:
             self._last_metric = np.mean(np.abs(rs - fs)**self._order)
             if self._normalize:
