@@ -1,6 +1,7 @@
 from cosmotools.metric import stats
 from scipy import linalg
 import numpy as np
+import warnings
 
 def compute_fd(real_stats, fake_stats):
     """Compute the Frechet Distance for a statistic"""

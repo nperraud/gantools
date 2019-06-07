@@ -454,6 +454,7 @@ class UpscalePatchWGAN(WGAN):
         d_params['generator']['use_Xdown'] = False
         d_params['generator']['latent_dim_split'] = None
         d_params['generator']['weights_border'] = False
+        d_params['generator']['borders'] = None
 
         return d_params
 
@@ -610,11 +611,7 @@ class UpscalePatchWGAN(WGAN):
                 collections=['model'])
 
     def generator(self, z, y, X=None, **kwargs):
-#         if self.params['generator']['use_old_gen']:
-#             print('Using old generator...')
-#             return generator_up(z, X=X, y=y, params=self.params['generator'], **kwargs, scope='generator')
-#         else:
-        if self.params['generator'].get('borders', None):
+        if self.params['generator']['borders'] is not None:
             axis = self.data_size + 1
             newy = tf.concat(y, axis=axis)
             return generator_border(z, X=X, y=newy, params=self.params['generator'], **kwargs)
@@ -643,150 +640,7 @@ class UpscalePatchWGAN(WGAN):
 #     zt = tf.convert_to_tensor(zt, np.float32)
 #     return X*zt
 
-# class UpscalePatchWGANBordersOld(UpscalePatchWGAN):
-#     '''
-#     Generate blocks, using top, left and top-left border information
 
-#     This model will encode borders instead of flipping them.
-#     '''
-
-#     def default_params(self):
-#         d_params = deepcopy(super().default_params())
-#         bn = False
-#         d_params['generator']['full'] = [512]
-#         d_params['generator']['nfilter'] = [2, 32, 32, 1]
-#         d_params['generator']['borders'] = dict()
-#         d_params['generator']['borders']['width_full'] = None
-#         d_params['generator']['borders']['nfilter'] = [2, 8, 1]
-#         d_params['generator']['borders']['batch_norm'] = [bn, bn, bn]
-#         d_params['generator']['borders']['shape'] = [[5, 5], [5, 5], [5, 5]]
-#         d_params['generator']['borders']['stride'] = [2, 2, 2]
-#         d_params['generator']['borders']['data_size'] = 2 # 1 for 1D signal, 2 for images, 3 for 3D
-#         return d_params
-
-
-#     def generator(self, z, y=None, **kwargs):
-#         axis = self.data_size +1
-#         newy = tf.concat(y, axis=axis)
-#         return generator_border(z, y=newy, params=self.params['generator'], **kwargs)
-
-
-class UpscalePatchWGANBorders(UpscalePatchWGAN):
-    '''
-    Generate blocks, using top, left and top-left border information
-
-    This model will encode borders instead of flipping them.
-    '''
-
-    def default_params(self):
-        d_params = super().default_params()
-        bn = False
-        d_params['shape'] = [256, 1] # Shape of the image
-
-        d_params['generator']['latent_dim'] = 16
-        d_params['generator']['latent_dim_split'] = None
-        d_params['generator']['full'] = [32]
-        d_params['generator']['nfilter'] = [2, 32, 1]
-        d_params['generator']['batch_norm'] = [bn, bn, bn]
-        d_params['generator']['shape'] = [[21], [21], [21], [21]]
-        d_params['generator']['stride'] = [1, 2, 2, 1]
-        d_params['generator']['full'] = [64]
-        d_params['generator']['nfilter'] = [2, 32, 32, 1]
-        d_params['generator']['data_size'] = 1 # 1 for 1D signal, 2 for images, 3 for 3D
-
-        d_params['generator']['borders'] = dict()
-        d_params['generator']['borders']['width_full'] = None
-        d_params['generator']['borders']['nfilter'] = [2, 8, 1]
-        d_params['generator']['borders']['batch_norm'] = [bn, bn, bn]
-        d_params['generator']['borders']['shape'] = [[5, 5], [5, 5], [5, 5]]
-        d_params['generator']['borders']['stride'] = [2, 2, 2]
-        d_params['generator']['borders']['data_size'] = 1 # 1 for 1D signal, 2 for images, 3 for 3D
-
-        d_params['discriminator']['full'] = [32]
-        d_params['discriminator']['nfilter'] = [16, 32, 32, 32]
-        d_params['discriminator']['batch_norm'] = [bn, bn, bn, bn]
-        d_params['discriminator']['shape'] = [[21], [21], [21], [21]]
-        d_params['discriminator']['stride'] = [2, 2, 2, 1]
-        d_params['discriminator']['data_size'] = 1 # 1 for 1D signal, 2 for images, 3 for 3D
-
-
-
-        return d_params
-
-    def _build_generator(self):
-        shape = self.params['shape']
-        reduction = np.prod(np.array(self.params['generator']['stride']))*2
-        in_conv_shape = [el//reduction for el in shape[:-1]]
-        self._params['generator']['in_conv_shape'] = in_conv_shape
-        self.X_data = tf.placeholder(tf.float32, shape=[None, *shape], name='X_data')
-        self.z = tf.placeholder(
-            tf.float32,
-            shape=[None, self.params['generator']['latent_dim']],
-            name='z')
-        # A) Separate real data and border information
-        if self.data_size==3:
-            axis = 4
-            o = 7
-        elif self.data_size==2:
-            axis = 3
-            o = 3
-        else:
-            axis=2
-            o = 1
-        if self.params['upscaling']:
-            self.X_real, self.X_down_up = tf.split(self.X_data, [1,1], axis=axis)
-            if self.data_size==1:
-                middle = self.X_down_up.shape.as_list()[1]//2
-                X_smooth = self.X_down_up[:,middle:,:]
-            else:
-                raise NotImplementedError()
-            inshape = X_smooth.shape.as_list()[1:]
-            self.X_smooth = tf.placeholder_with_default(X_smooth, shape=[None, *inshape], name='y')
-        else:
-            self.X_real = self.X_data
-            self.X_smooth = None
-
-        if self.data_size==1:
-            middle = self.X_real.shape.as_list()[1]//2
-            self.X_real_corner = self.X_real[:,middle:,:]
-            borders = self.X_real[:,:middle,:]
-        else:
-            raise NotImplementedError()
-        inshape = borders.shape.as_list()[1:]
-        self.borders = tf.placeholder_with_default(borders, shape=[None, *inshape], name='borders')
-        
-        # B) Split the borders
-        border_list = tf.split(self.borders, o, axis=axis)
-
-        # D) Flip the borders
-
-        flipped_border_list = tf_flip_slices(*border_list, size=self.data_size)
-
-        # E) Generater the corner
-        X = self.X_smooth
-        if self.params['generator']['latent_dim_split'] is not None:
-            lts = self.params['generator']['latent_dim_split']
-            ltv = np.prod(np.array(lts))
-            z = self.z[:,ltv:]
-            bs = tf.shape(self.z)[0]
-            imgz = tf.reshape(self.z[:,:ltv],[bs, *lts])
-
-            if X is None:
-                X = imgz
-            else:
-                X = tf.concat((X, imgz), axis=len(imgz.shape)-1)
-
-        self.X_fake_corner = self.generator(z=z, y=flipped_border_list, X=X, reuse=False)
-        
-        #F) Recreate the big images
-        self.X_real = tf_patch2img(self.X_real_corner, *border_list, size=self.data_size)
-        self.X_fake = tf_patch2img(self.X_fake_corner, *border_list, size=self.data_size)
-
-
-    def generator(self, z, y=None, **kwargs):
-        axis = self.data_size +1
-        newy = tf.concat(y, axis=axis)
-        return generator_border(z, y=newy, params=self.params['generator'], **kwargs)
 
 
 

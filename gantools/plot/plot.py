@@ -182,7 +182,7 @@ def cubes_to_animation(cubes, clim=None, figsize=(10,11), title=None, fontsize=2
         ind = int(round(t*fps))
         plt.cla()
         plt.imshow(cubes[0, ind, :, :], interpolation='none', clim=clim, **kwargs )
-        plt.axis('off')
+#         plt.axis('off')
         titlestr = 'Frame no. {}'.format(ind)
         if title:
             titlestr = title + ' - ' + titlestr
@@ -275,7 +275,7 @@ def get_animation(real_cube, fake_cube, real_downsampled=None, clim = None,
     
 
     animation = VideoClip(make_frame, duration= dim//fps)
-    #plt.style.use('default')
+    plt.style.use('default')
     return animation
 
 

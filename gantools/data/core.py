@@ -22,7 +22,7 @@ class Dataset(object):
         ---------
         * X         : numpy array containing the data
         * shuffle   : True if the data should be shuffled
-        * transform : Function to be applied ot each batch of the dataset
+        * transform : Function to be applied to the sliced dataset
                       This allows extend the dataset.
         * slice_fn : Slicing function to cut the data into smaller parts
         '''
