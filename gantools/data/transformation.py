@@ -230,7 +230,7 @@ def patch2img(patches, size=2):
 def fill_void(dat, axis):
     naxis = len(dat.shape)-1
     l,r = tf.split(dat,2, axis=axis)
-    m = tf.cast(tf.reduce_sum(tf.abs(l),axis=[range(1,naxis)], keep_dims=True)>0, dtype=tf.float32)
+    m = tf.cast(tf.reduce_sum(tf.abs(l),axis=list(range(1,naxis)), keep_dims=True)>0, dtype=tf.float32)
     l = l*m + tf.reverse(r,axis=[axis])*(1-m)
     return tf.concat((l,r), axis=axis)
 
