@@ -227,18 +227,29 @@ def patch2img(patches, size=2):
         raise ValueError('data_shape must be 1,2 or 3.')
     return imgs
 
-def tf_patch2img_1d(r, l):
+def fill_void(dat, axis):
+    naxis = len(dat.shape)-1
+    l,r = tf.split(dat,2, axis=axis)
+    m = tf.cast(tf.reduce_sum(tf.abs(l),axis=[range(1,naxis)], keep_dims=True)>0, dtype=tf.float32)
+    l = l*m + tf.reverse(r,axis=[axis])*(1-m)
+    return tf.concat((l,r), axis=axis)
+
+def tf_patch2img_1d(r, l, use_symmetry=False):
     imgs = tf.concat([l, r], axis=1)
+    if use_symmetry:
+        imgs = fill_void(imgs, axis=1)
     return imgs
 
-def tf_patch2img_2d(dr, dl, ur, ul):
-
+def tf_patch2img_2d(dr, dl, ur, ul, use_symmetry=False):
     imgs_d = tf.concat([dl, dr], axis=1)
     imgs_u = tf.concat([ul, ur], axis=1)
     imgs = tf.concat([imgs_u,  imgs_d], axis=2)
+    if use_symmetry:
+        imgs = fill_void(imgs, axis=1)
+        imgs = fill_void(imgs, axis=2)
     return imgs
 
-def tf_patch2img_3d(*args):
+def tf_patch2img_3d(*args, use_symmetry=False):
     imgs_down_left = tf.concat([args[3], args[2]], axis=2)
     imgs_down_right = tf.concat([args[1], args[0]], axis=2)
     imgs_down = tf.concat([imgs_down_left, imgs_down_right], axis=3)
@@ -246,6 +257,10 @@ def tf_patch2img_3d(*args):
     imgs_up_right = tf.concat([args[5], args[4]], axis=2)
     imgs_up = tf.concat([ imgs_up_left, imgs_up_right], axis=3)
     imgs = tf.concat([imgs_up, imgs_down], axis=1)
+    if use_symmetry:        
+        imgs = fill_void(imgs, axis=1)
+        imgs = fill_void(imgs, axis=2)        
+        imgs = fill_void(imgs, axis=3)        
     return imgs
 
 def flip_slices_1d(l):
@@ -298,13 +313,13 @@ def tf_flip_slices(*args, size=2):
         raise ValueError("Size should be 1, 2 or 3")
 
 
-def tf_patch2img(*args, size=2):
+def tf_patch2img(*args, size=2, use_symmetry=False):
     if size==3:
-        return tf_patch2img_3d(*args)
+        return tf_patch2img_3d(*args, use_symmetry=use_symmetry)
     elif size==2:
-        return tf_patch2img_2d(*args)
+        return tf_patch2img_2d(*args, use_symmetry=use_symmetry)
     elif size==1:
-        return tf_patch2img_1d(*args)
+        return tf_patch2img_1d(*args, use_symmetry=use_symmetry)
     else:
         raise ValueError("Size should be 1, 2 or 3")
 
@@ -570,11 +585,11 @@ def upsamler_1d(sig, s=2, Nwin=32):
     return new_sig
 
 
-def attenuation_kernel_lin(nx=32):
-    x = 1 - np.arange(nx)/nx
-    x -= 0.5
-    x[x<0] = 0
-    return 2*x
+# def attenuation_kernel(nx=32):
+#     x = 1 - np.arange(nx)/nx
+#     x -= 0.5
+#     x[x<0] = 0
+#     return 2*x
 def attenuation_kernel(nx=32):
     x = np.arange(nx)/nx
     x = np.exp(-x**2)

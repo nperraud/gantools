@@ -445,6 +445,7 @@ class UpscalePatchWGAN(WGAN):
         d_params['shape'] = [16, 16, 4] # Shape of the input data (1 image and 3 borders)
         bn = False
         d_params['upscaling'] = None
+        d_params['use_symmetry'] = False
         d_params['generator']['latent_dim'] = 16*16
         d_params['generator']['full'] = []
         d_params['generator']['nfilter'] = [16, 32, 32, 1]
@@ -539,8 +540,8 @@ class UpscalePatchWGAN(WGAN):
 
         
         #F) Recreate the big images
-        self.X_real = tf_patch2img(self.X_real_corner, *border_list, size=self.data_size)
-        self.X_fake = tf_patch2img(self.X_fake_corner, *border_list, size=self.data_size)
+        self.X_real = tf_patch2img(self.X_real_corner, *border_list, size=self.data_size, use_symmetry=self.params['use_symmetry'])
+        self.X_fake = tf_patch2img(self.X_fake_corner, *border_list, size=self.data_size, use_symmetry=self.params['use_symmetry'])
 
         if self.params['upscaling']:
             self.X_down_up = up_sampler(down_sampler(self.X_real, s=self.upscaling),s=self.upscaling)
