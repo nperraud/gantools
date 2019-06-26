@@ -585,15 +585,16 @@ def upsamler_1d(sig, s=2, Nwin=32):
     return new_sig
 
 
-# def attenuation_kernel(nx=32):
-#     x = 1 - np.arange(nx)/nx
-#     x -= 0.5
-#     x[x<0] = 0
-#     return 2*x
 def attenuation_kernel(nx=32):
-    x = np.arange(nx)/nx
-    x = np.exp(-x**2)
-    return x
+    x = 1 - np.arange(nx)/nx
+    x -= 0.5
+    x[x<0] = 0
+    return 2*x
+
+# def attenuation_kernel(nx=32):
+#     x = np.arange(nx)/nx
+#     x = np.exp(-x**2)
+#     return x
 
 def attenuation_weights_2d(ns=32):
     k = attenuation_kernel(ns)
