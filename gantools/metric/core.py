@@ -3,7 +3,7 @@
 import numpy as np
 import tensorflow as tf
 from gantools.plot.plot_summary import PlotSummaryLog, PlotSummaryPlot
-from .fd import compute_fd
+from gantools.metric.fd import compute_fd
 
 class TFsummaryHelper(object):
     """Helper class for tensorflow summaries."""

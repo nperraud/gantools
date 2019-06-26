@@ -6,8 +6,7 @@ import unittest
 
 import numpy as np
 
-from gantools import data
-from gantools.data.Dataset import slice_2d_patch, slice_2d
+from gantools.data.transformation import slice_2d_patch, slice_2d
 
 
 class TestSlice2d(unittest.TestCase):

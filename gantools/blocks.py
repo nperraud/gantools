@@ -251,7 +251,8 @@ def down_sampler(x=None, s=2, size=None):
 
     elif size==2:
         filt = tf.constant(1 / (s * s), dtype=tf.float32, shape=[s, s, 1, 1])
-        if down_sampler_x.shape[-1]==1:
+        ldim = down_sampler_x.shape[-1]
+        if ldim==1 or not(isinstance(ldim, int)):
             return tf.nn.conv2d(down_sampler_x, filt, strides=[1, s, s, 1], padding='SAME', name=op_name)
         else:
             res = []
@@ -295,8 +296,9 @@ def up_sampler(x, s=2, size=None, smoothout=False):
                 output_shape=output_shape,
                 strides=[1, s, s, 1],
                 padding='SAME')
+
             if smoothout:
-                paddings = tf.constant([[0,0],[s//2-1, s//2-1], [ s//2,  s//2], [0,0]])
+                paddings = tf.constant([[0,0],[(s-1)//2, s//2], [ (s-1)//2,  s//2], [0,0]])
                 x = tf.pad(x, paddings, "SYMMETRIC")
                 x = tf.nn.conv2d(
                     x,
@@ -314,7 +316,7 @@ def up_sampler(x, s=2, size=None, smoothout=False):
                     strides=[1, s, s, 1],
                     padding='SAME')
                 if smoothout:
-                    paddings = tf.constant([[0,0],[s//2-1, s//2], [ s//2-1,  s//2], [0,0]])
+                    paddings = tf.constant([[0,0],[(s-1)//2, s//2], [ (s-1)//2,  s//2], [0,0]])
                     tx = tf.pad(tx, paddings, "SYMMETRIC")
                     tx = tf.nn.conv2d(
                         tx,
@@ -387,7 +389,7 @@ def conv1d(imgs, nf_out, shape=[5], stride=2, use_spectral_norm=False, name="con
             
         # Pad the image
         K1 = (w.shape[0]-1)//2
-        K1 = w.shape[0]//2
+        K2 = w.shape[0]//2
         imgs = tf.pad(imgs,[[0,0],[K1,K2],[0,0]], mode=border)
         
         # Perform valid convolution

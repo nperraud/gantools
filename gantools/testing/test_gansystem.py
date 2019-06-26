@@ -6,15 +6,15 @@ if __name__ == '__main__':
 import unittest
 
 from gantools.model import WGAN
-from gantools.gansystem import GANsystem, PaulinaGANsystem
-from gantools.data.Dataset import Dataset
+from gantools.gansystem import GANsystem, DualGANsystem
+from gantools.data.core import Dataset
 import numpy as np
 
 
 class TestGANsystem(unittest.TestCase):
     def test_default_params(self):
         wgan = GANsystem(WGAN)
-        wgan = PaulinaGANsystem(WGAN)
+        wgan = DualGANsystem(WGAN)
 
 
     def test_gansystem(self):
@@ -32,7 +32,7 @@ class TestGANsystem(unittest.TestCase):
         img = wgan.generate(500)
         assert(len(img)==500)
 
-    def test_paulinasystem(self):
+    def test_dualgansystem(self):
         params = dict()
         params['optimization'] = dict()
         params['optimization']['epoch'] = 1
@@ -41,7 +41,7 @@ class TestGANsystem(unittest.TestCase):
         params['print_every'] = 3
         X = np.random.rand(101,16,16)
         dataset = Dataset(X)
-        wgan = PaulinaGANsystem(WGAN, params)
+        wgan = DualGANsystem(WGAN, params)
         wgan.train(dataset)
         img = wgan.generate(2)
         img = wgan.generate(500)

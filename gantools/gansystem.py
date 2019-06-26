@@ -41,7 +41,7 @@ class GANsystem(NNSystem):
         return d_param
 
 
-    def __init__(self,  model, params={}, name=None):
+    def __init__(self,  model, params=None, name=None):
         """Build the GAN network.
 
         Input arguments
@@ -52,6 +52,8 @@ class GANsystem(NNSystem):
         Please refer to the module `model` for details about
         the requirements of the class model.
         """
+        if params is None:
+            params = {}
         super().__init__(model=model, params=params, name=name)
   
 

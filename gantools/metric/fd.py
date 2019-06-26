@@ -1,4 +1,3 @@
-from cosmotools.metric import stats
 from scipy import linalg
 import numpy as np
 import warnings

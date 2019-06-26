@@ -12,7 +12,9 @@ from copy import deepcopy
 
 class BaseGAN(BaseNet):
     """Abstract class for the model."""
-    def __init__(self, params={}, name='BaseGAN'):
+    def __init__(self, params=None, name='BaseGAN'):
+        if params is None:
+            params = {}
         self.G_fake = None
         self.D_real = None
         self.D_fake = None
@@ -373,10 +375,10 @@ class LapWGAN(WGAN):
     # TODO add summaries for the 1D case...
     def default_params(self):
         d_params = deepcopy(super().default_params())
-        d_params['shape'] = [32, 32, 1] # Shape of the image
+        d_params['shape'] = [16, 16, 1] # Shape of the image
         bn = False
         d_params['upscaling'] = 2
-        d_params['generator']['latent_dim'] = 32*32
+        d_params['generator']['latent_dim'] = 16*16
         d_params['generator']['full'] = []
         d_params['generator']['nfilter'] = [16, 32, 32, 1]
         d_params['generator']['batch_norm'] = [bn, bn, bn]
