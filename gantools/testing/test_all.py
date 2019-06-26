@@ -12,6 +12,7 @@ from gantools.testing import test_models
 from gantools.testing import test_utils
 from gantools.testing import test_plots
 from gantools.testing import test_patch2img
+from gantools.testing import test_metric
 
 loader = unittest.TestLoader()
 
@@ -24,6 +25,7 @@ suites.append(loader.loadTestsFromModule(test_utils))
 suites.append(loader.loadTestsFromModule(test_models))
 suites.append(loader.loadTestsFromModule(test_plots))
 suites.append(loader.loadTestsFromModule(test_patch2img))
+suites.append(loader.loadTestsFromModule(test_metric))
 suite = unittest.TestSuite(suites)
 
 
