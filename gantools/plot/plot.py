@@ -214,20 +214,19 @@ def animate_cubes(cubes, output_name='clip', output_format='gif', clim=None,
     else:
         raise ValueError('Unknown output_format')
 
-def get_animation(real_cube, fake_cube, real_downsampled=None, clim = None, 
-    figsize=(10, 6), fps=16, axis=0, names=['real ', 'real downsampled ', 'fake '], 
+def get_animation(fig, real_cube, fake_cube, real_downsampled=None, clim = None, fps=16, axis=0, names=['Real', 'Downsampled', 'Fake'], 
     fontsize=20):
     '''
     Given real and fake 3d sample, create animation with slices along all 3 dimensions
     Return animation object
+    
+    By default, the figure will be in HD: 1920×1080 px
     '''
     from moviepy.editor import VideoClip
     from moviepy.video.io.bindings import mplfig_to_npimage
-    ind = [0] # has to be a list, as list are mutable
-    plt.style.use('dark_background')
+
     #ax = plt.axes([0,0,1,1], frameon=True)
     #plt.autoscale(tight=False)
-    fig = plt.figure(figsize=figsize)
 
     dim = fake_cube.shape[0]
 
@@ -248,48 +247,99 @@ def get_animation(real_cube, fake_cube, real_downsampled=None, clim = None,
             clim =(cmin, cmax)
 
     gridspec.GridSpec(grid[0], grid[1])
-
+    
+    duration = dim//fps
+    
     def make_frame(t):
 
         i = 0
+        ind = int(np.round(t*fps))
         plt.subplot2grid( grid, (0, i), rowspan=1, colspan=1)
-        plt.imshow(real_cube[ind[0] % dim, :, :], interpolation='nearest', cmap=plt.cm.plasma, clim=clim )
-        plt.title(names[0] + str(dim) + 'x' + str(dim) + 'x' + str(dim), fontsize=fontsize)
+        plt.imshow(real_cube[ind % dim, :, :], interpolation='nearest', cmap=plt.cm.plasma, clim=clim )
+        plt.title(names[0] + ' {0}x{0}x{0}'.format(dim), fontsize=fontsize, color='white')
         i = i + 1
 
 
         if real_downsampled is not None:
             plt.subplot2grid( grid, (0, i), rowspan=1, colspan=1)
-            plt.imshow(real_downsampled[(ind[0] // factor) % dim_downsampled, :, :], interpolation='nearest', cmap=plt.cm.plasma, clim=clim )
-            plt.title(names[1] + str(dim_downsampled) + 'x' + str(dim_downsampled) + 'x' + str(dim_downsampled), fontsize=fontsize)
+            plt.imshow(real_downsampled[(ind // factor) % dim_downsampled, :, :], interpolation='nearest', cmap=plt.cm.plasma, clim=clim )
+            plt.title(names[1] + ' {0}x{0}x{0}'.format(dim_downsampled), fontsize=fontsize, color='white')
             i = i + 1
 
 
         plt.subplot2grid( grid, (0, i), rowspan=1, colspan=1)
-        plt.imshow(fake_cube[ind[0] % dim, :, :], interpolation='nearest', cmap=plt.cm.plasma, clim=clim )
-        plt.title(names[2] + str(dim) + 'x' + str(dim) + 'x' + str(dim), fontsize=fontsize)
+        plt.imshow(fake_cube[ind % dim, :, :], interpolation='nearest', cmap=plt.cm.plasma, clim=clim )
+        plt.title(names[-1] + ' {0}x{0}x{0}'.format(dim), fontsize=fontsize, color='white')
         plt.tight_layout()
 
-        ind[0] += 1
         return mplfig_to_npimage(fig)
     
 
-    animation = VideoClip(make_frame, duration= dim//fps)
-    plt.style.use('default')
+    animation = VideoClip(make_frame, duration=duration)
     return animation
 
+def clip_title(fig, title='title', fontsize=40):
+    '''
+    Make a videoclip with a centered white title
+    '''
+    from moviepy.editor import VideoClip
+    from moviepy.video.io.bindings import mplfig_to_npimage
+    
+    duration = 1
+    ax = plt.gca()
+    left, width = .25, .5
+    bottom, height = .25, .5
+    right = left + width
+    top = bottom + height
+    def make_frame(t):
+        ax = plt.gca()
+        ax = fig.add_axes([0,0,1,1])
+        ax.text(0.5*(left+right), 0.5*(bottom+top), title,
+                horizontalalignment='center',
+                verticalalignment='center',
+                fontsize=fontsize, color='white',
+                transform=ax.transAxes)
+        return mplfig_to_npimage(fig)
+    
 
-def save_animation(real_cube, fake_cube, real_downsampled=None, figsize=(10, 6), fps=16, 
+    animation = VideoClip(make_frame, duration=duration)
+    return animation
+
+def save_animation(real_cube, fake_cube, real_downsampled=None, figsize=(10, 6), dpi=96, fps=16, 
     format='gif', output_file_name='test', names=['real ', 'real downsampled ', 'fake '],
     fontsize=20, clim=None):
     '''
     Given real and fake 3d sample, create animation with slices along all 3 dimensions, and save it as gif.
     '''
-    animation = get_animation(real_cube, fake_cube, real_downsampled, 
-        clim=clim, figsize=figsize, fps=fps, names=names, fontsize=fontsize)
+    
+    plt.style.use('dark_background')
+
+    from moviepy.editor import concatenate_videoclips
+    assert(real_cube.shape==fake_cube.shape)
+    if real_downsampled is not None:
+        assert(real_cube.shape[0]==real_downsampled.shape[0])
+    if len(real_cube.shape)<=3:
+        real_cube = np.expand_dims(real_cube, axis=0)
+        fake_cube = np.expand_dims(fake_cube, axis=0)
+        if real_downsampled:
+            if len(real_downsampled.shape)<=3:
+                real_downsampled = np.expand_dims(real_downsampled, axis=0)
+    if real_downsampled is None:
+        real_downsampled = [None] * len(real_cube)
+    animations = []
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+
+    for i in range(len(real_cube)):
+        animations.append(clip_title(fig, title='Sample {}'.format(i+1), fontsize=100))
+        animations.append(get_animation(fig, real_cube[i], fake_cube[i], real_downsampled[i], 
+        clim=clim, fps=fps, names=names, fontsize=fontsize))
+    
+    animation = concatenate_videoclips(animations)
     if format == 'gif':
         animation.write_gif(output_file_name + '.gif', fps=fps)
     else:
         animation.write_videofile(output_file_name, fps=fps)
+    plt.style.use('default')
     plt.clf()
+    return animation
     
