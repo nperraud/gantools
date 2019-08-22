@@ -579,5 +579,74 @@ class TestGANmodels(unittest.TestCase):
         img = wgan.generate(N=500, X_smooth=X_smooth[:500], borders=borders[:500])
         assert (len(img) == 500)
 
+    def test_conditionalwgan(self):
+
+        bn = False
+        ns = 16
+
+        # Parameters for the generator
+        params_generator = dict()
+        params_generator['latent_dim'] = 126
+        params_generator['stride'] = [1, 2, 1, 1]
+        params_generator['nfilter'] = [32, 64, 32, 1]
+        params_generator['shape'] = [[5, 5], [5, 5], [5, 5], [5, 5]]
+        params_generator['batch_norm'] = [bn, bn, bn]
+        params_generator['full'] = [8 * 8 * 32]
+        params_generator['non_lin'] = tf.nn.relu
+        params_generator['in_conv_shape'] = [8, 8]
+
+        # Parameters for the discriminator
+        params_discriminator = dict()
+        params_discriminator['stride'] = [2, 2, 1]
+        params_discriminator['nfilter'] = [16, 64, 32]
+        params_discriminator['shape'] = [[5, 5], [5, 5], [3, 3]]
+        params_discriminator['batch_norm'] = [bn, bn, bn]
+        params_discriminator['full'] = [512, 128, 32]
+        params_discriminator['minibatch_reg'] = False
+
+        # Optimization parameters
+        d_opt = dict()
+        d_opt['optimizer'] = "rmsprop"
+        d_opt['learning_rate'] = 3e-5
+        params_optimization = dict()
+        params_optimization['n_critic'] = 5
+        params_optimization['batch_size'] = 8
+        params_optimization['epoch'] = 1
+
+        # Cosmology parameters
+        params_cosmology = dict()
+        params_cosmology['forward_map'] = None
+        params_cosmology['backward_map'] = None
+
+        # all parameters
+        params = dict()
+        params['net'] = dict() # All the parameters for the model
+        params['net']['generator'] = params_generator
+        params['net']['discriminator'] = params_discriminator
+        params['net']['cosmology'] = params_cosmology # Parameters for the cosmological summaries
+        params['net']['shape'] = [ns, ns, 1] # Shape of the image
+        params['net']['gamma_gp'] = 10 # Gradient penalty
+
+        # Conditional params
+        params['net']['prior_normalization'] = False
+        params['net']['cond_params'] = 2
+        params['net']['init_range'] = [[0, 1], [0, 1]]
+        params['net']['prior_distribution'] = "gaussian_length"
+        params['net']['final_range'] = [0.1*np.sqrt(params_generator['latent_dim']), 1*np.sqrt(params_generator['latent_dim'])]
+
+        params['optimization'] = params_optimization
+        params['summary_every'] = 4
+        params['save_every'] = 5
+        params['print_every'] = 3
+        params['Nstats'] = 100
+
+        X = np.random.rand(101, ns, ns)
+        parameters = np.random.rand(101, 2)
+        dataset = Dataset_parameters(X, parameters)
+        wgan = GANsystem(ConditionalParamWGAN, params)
+        wgan.train(dataset)
+        img = wgan.generate(N=16, **{'z': wgan.net.sample_latent(bs=16, params=np.random.rand(16, 2))})
+        assert (img.shape[0] == 16 and img.shape[1] == ns and img.shape[2] == ns and img.shape[3] == 1)
+
 if __name__ == '__main__':
     unittest.main()
