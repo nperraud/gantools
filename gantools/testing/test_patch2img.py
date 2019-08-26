@@ -1,6 +1,10 @@
+import tensorflow as tf
+
 if __name__ == '__main__':
     import sys, os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__),'../../'))
+    tf.enable_eager_execution()
+
 
 import unittest
 
@@ -8,7 +12,6 @@ import numpy as np
 
 from gantools.data.transformation import tf_flip_slices_1d, tf_flip_slices_2d, tf_flip_slices_3d, tf_patch2img_1d, tf_patch2img_2d, tf_patch2img_3d
 import tensorflow as tf
-tf.enable_eager_execution()
 
 
 class Patch2Img(unittest.TestCase):
@@ -25,7 +28,7 @@ class Patch2Img(unittest.TestCase):
         r2 = tf_patch2img_1d(sig1d, sig1d0, use_symmetry=True)
         np.testing.assert_allclose(r1,r2)
 
-    def test_2d(self):    
+    def test_2d(self):
         sig2dr = np.random.rand(5,4,4,3).astype(np.float32)
         sig2dl = np.random.rand(5,4,4,3).astype(np.float32)
         sig2dl2 = np.random.rand(5,4,4,3).astype(np.float32)
@@ -48,9 +51,10 @@ class Patch2Img(unittest.TestCase):
         r2 = tf_patch2img_2d(sig2dr,sig2d0, sig2dl, sig2d0, use_symmetry=True)
         np.testing.assert_allclose(r1,r2)
 
-    def test_3d(self):    
-        sig3d = list(np.random.rand(5,4,4,4,3).astype(np.float32) for _ in range(8))
 
+    def test_3d(self):
+
+        sig3d = list(np.random.rand(5,4,4,4,3).astype(np.float32) for _ in range(8))
         sig3d0 = np.zeros((5,4,4,4,3)).astype(np.float32)
         sig3d_f = tf_flip_slices_3d(*[sig3d[0]]*7)
         args_1 = list((sig3d[0], *sig3d_f))
@@ -59,6 +63,7 @@ class Patch2Img(unittest.TestCase):
         r1 = tf_patch2img_3d(*args_1, use_symmetry=True)
         r2 = tf_patch2img_3d(*args_2, use_symmetry=True)
         np.testing.assert_allclose(r1,r2)
+    
 
 if __name__ == '__main__':
     unittest.main()

@@ -23,8 +23,9 @@ class TestUtils(unittest.TestCase):
         assert(utils.get_closest_divisor(2)==1)
         assert(utils.get_closest_divisor(3)==3)
         assert(utils.get_closest_divisor(35)==7)
-        for i in range(100):
+        for i in range(1,100):
             assert(np.mod(i,utils.get_closest_divisor(i))==0)
+        assert(utils.get_closest_divisor(0)==0)
 
 if __name__ == '__main__':
     unittest.main()

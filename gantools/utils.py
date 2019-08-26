@@ -188,6 +188,8 @@ def tile_cube_slices(cubes):
     return np.array(tiles)
 
 def get_closest_divisor(x):
+    if x==0:
+        return 0
     t = np.int(np.round(np.sqrt(x)))
     while np.mod(x, t):
         t += 1
