@@ -343,3 +343,15 @@ def save_animation(real_cube, fake_cube, real_downsampled=None, figsize=(10, 6),
     plt.clf()
     return animation
     
+def plot_histogram(x, histo, yscale='log', tick_every=10, bar_width=1):
+    plt.bar(np.arange(len(histo)), histo, bar_width)
+    positions, labels = ([], [])
+    for idx in range(len(x)):
+        if idx == len(x) - 1:
+            positions.append(idx)
+            labels.append(np.round(x[idx], 2))
+        if idx % tick_every == 0:
+            positions.append(idx)
+            labels.append(np.round(x[idx], 2))
+    plt.xticks(positions, labels)
+    plt.yscale(yscale)

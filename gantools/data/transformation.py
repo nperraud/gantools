@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from scipy.signal import firwin
+from scipy.ndimage.filters import gaussian_filter
 
 
 def random_shift_1d(signals, roll=False, spix=None, force_equal=True):
@@ -624,3 +625,25 @@ def get_attenuation_weights(ns, data_size):
         return slice_3d_patch(np.expand_dims(aw, axis=0), spix=ns)[-1:,:,:,:,:7]
     else:
         raise ValueError("Wrong data size")
+
+# Smooth an array of images with a gaussian kernel
+def smooth(x, kernel):
+    new_x = x.copy()
+    for i in range(len(x)):
+        new_x[i] = gaussian_filter(x[i], kernel)
+    return new_x
+
+# Rescale images to a certain interval
+# Linearly transform samples such that the lowest value is final_inter[0] and the highest final_inter[1]
+# imgs: array containing the samples
+# init_inter: initial interval
+# final_inter: final interval
+# crop: whether to crop values outside of the interval
+def rescale(imgs, init_inter, final_inter, crop=False):
+    new_imgs = imgs.copy()
+    for i in range(len(imgs)):
+        new_imgs[i] = utils.scale2range(imgs[i], init_inter, final_inter)
+        if crop:
+            new_imgs[i][new_imgs[i] < final_inter[0]] = final_inter[0]
+            new_imgs[i][new_imgs[i] > final_inter[1]] = final_inter[1]
+    return new_imgs
