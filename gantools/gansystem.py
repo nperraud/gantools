@@ -36,6 +36,8 @@ class GANsystem(NNSystem):
         d_param['optimization']['n_critic'] = 5
         d_param['optimization']['epoch'] = 10
         d_param['optimization']['batch_size'] = 8
+#         d_param['optimization']['param_trick'] = False
+
         d_param['Nstats'] = None
 
         return d_param
@@ -114,7 +116,14 @@ class GANsystem(NNSystem):
             raise Exception(" [!] Choose optimizer between [adam,rmsprop,sgd]")
 
         return optimizer
-
+    
+    # Redraw latent variable and switch real / fake flag
+    def _redraw_latent(self, feed_dict):
+        if 'conditional' in self.params['net'] and self.params['net']['conditional']:
+                feed_dict[self.net.z] = self.net.sample_latent(self.params['optimization']['batch_size'], feed_dict[self.net.X_param])
+        else:
+            feed_dict[self.net.z] = self.net.sample_latent(self.params['optimization']['batch_size'])
+            
     def train(self, dataset, **kwargs):
         if self.params['Nstats']:
             assert(dataset.N>=self.params['Nstats'])
@@ -127,7 +136,17 @@ class GANsystem(NNSystem):
         for _ in range(self.params['optimization']['n_critic']):
             _, loss_d = self._sess.run([self._optimize[0], self.net.loss[0]], feed_dict=feed_dict)
             # Small hack: redraw a new latent variable
-            feed_dict[self.net.z] = self.net.sample_latent(self.params['optimization']['batch_size'])
+            self._redraw_latent(feed_dict)
+        # Trick: give real image with random parameters
+        # If set the GAN is conditional and the 'param_trick' flag is set to true update the discriminator again using a batch of real samples and fake parameters
+#         if 'conditional' in self.params['net'] and self.params['net']['conditional'] and self.params['optimization']['param_trick']:
+#             real_params = np.copy(feed_dict[self.net.X_param])
+#             for c in range(self.params['net']['cond_params']):
+#                 feed_dict[self.net.X_param][:, c] = utils.scale2range(np.random.rand(len(feed_dict[self.net.X_param])), [0, 1], self.params['net']['init_range'][c])
+#             _, loss_d = self._sess.run([self._optimize[0], self.net.loss[0]], feed_dict=feed_dict)
+#             # Restore real parameters and draw latent variable
+#             feed_dict[self.net.X_param] = real_params
+#             self._redraw_latent(feed_dict)
         # Update Encoder
         if self.net.has_encoder:
             _, loss_e = self._sess.run(

@@ -74,5 +74,3 @@ def gan_metric_list(recompute_real=False, size=2):
     metric_list = [StatisticalMetric(statistic=stat, recompute_real=recompute_real) for stat in stat_list]
 
     return metric_list
-
-
