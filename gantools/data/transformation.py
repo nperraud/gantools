@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 from scipy.signal import firwin
 from scipy.ndimage.filters import gaussian_filter
-
+from gantools.utils import scale2range
 
 def random_shift_1d(signals, roll=False, spix=None, force_equal=True):
     """Apply a random shift to 1 d signal.
@@ -642,7 +642,7 @@ def smooth(x, kernel):
 def rescale(imgs, init_inter, final_inter, crop=False):
     new_imgs = imgs.copy()
     for i in range(len(imgs)):
-        new_imgs[i] = utils.scale2range(imgs[i], init_inter, final_inter)
+        new_imgs[i] = scale2range(imgs[i], init_inter, final_inter)
         if crop:
             new_imgs[i][new_imgs[i] < final_inter[0]] = final_inter[0]
             new_imgs[i][new_imgs[i] > final_inter[1]] = final_inter[1]
