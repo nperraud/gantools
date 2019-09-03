@@ -275,6 +275,46 @@ class GANsystem(NNSystem):
         gen_images.append(gi)
         return self._special_vstack(gen_images)
 
+    def get_weights(self, name, sess=None, checkpoint=None):
+        var = [v for v in tf.trainable_variables() if v.name == name]
+        if sess is not None:
+            self._sess = sess
+            print("Not loading a checkpoint")
+        else:
+            self._sess = tf.Session()
+            res = self.load(checkpoint=checkpoint)
+            if res:
+                print("Checkpoint succesfully loaded!")
+        weights = self._sess.run(var)
+        if sess is None:
+            self._sess.close()
+        return weights
+
+    # Get the features produced at layer 'layer' for the batch 'batch'
+    # Note that layer must be saved as an attribute of self.net
+    def get_values_at(self, batch, layers, sess=None, checkpoint=None):
+        feed_dict = self._get_dict(**self.net.batch2dict(batch))
+        is_single = False
+        if not isinstance(layers, list):
+            layers = [layers]
+            is_single = True
+        for l in layers:
+            if not hasattr(self.net, l):
+                raise ValueError("Layer " + l + " is not an attribute of the model")
+        if sess is not None:
+            self._sess = sess
+            print("Not loading a checkpoint")
+        else:
+            self._sess = tf.Session()
+            res = self.load(checkpoint=checkpoint)
+            if res:
+                print("Checkpoint succesfully loaded!")
+        features_out = self._sess.run([getattr(self.net, l) for l in layers], feed_dict=feed_dict)
+        if sess is None:
+            self._sess.close()
+        if is_single:
+            features_out = features_out[0]
+        return features_out
 
 class DualGANsystem(GANsystem):
 
