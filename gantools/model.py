@@ -61,6 +61,8 @@ class WGAN(BaseGAN):
         d_params['prior_distribution'] = 'gaussian' # prior distribution
         d_params['gamma_gp'] = 10 
         d_params['loss_type'] = 'wasserstein'  # 'hinge' or 'wasserstein'
+        d_params['fs'] = 16000  # only for 1d signal
+        
 
         bn = False
 
@@ -329,10 +331,46 @@ class WGAN(BaseGAN):
 
 class InpaintingGAN(WGAN):
     def default_params(self):
+        bn = False
         d_params = deepcopy(super().default_params())
+        bn = False
+        signal_length = 1024*16
+        signal_split = [1024*6, 1024*4, 1024*6]
+        md = 16
+        d_params['shape'] = [signal_length, 1] # Shape of the image
         d_params['inpainting'] = dict()
-        v = 4096 + 2048
-        d_params['inpainting']['split'] = [v, 4096, v]
+        d_params['inpainting']['split'] = signal_split
+        d_params['discriminator']['stride'] = [4,4,4,4,4]
+        d_params['discriminator']['nfilter'] = [md, 2*md, 4*md, 8*md, 16*md]
+        d_params['discriminator']['shape'] = [[25], [25], [25], [25], [25]]
+        d_params['discriminator']['batch_norm'] = [bn, bn, bn, bn, bn]
+        d_params['discriminator']['full'] = [md*4]
+        d_params['discriminator']['minibatch_reg'] = False
+        d_params['discriminator']['summary'] = True
+        d_params['discriminator']['data_size'] = 1
+        d_params['discriminator']['apply_phaseshuffle'] = True 
+        d_params['discriminator']['spectral_norm'] = True
+        d_params['discriminator']['activation'] = tf.nn.relu
+        d_params['generator']['stride'] = [4, 4, 4, 4, 4]
+        d_params['generator']['latent_dim'] = 100
+        d_params['generator']['nfilter'] = [8*md, 4*md, 2*md, md, 1]
+        d_params['generator']['shape'] = [[25], [25], [25], [25], [25]]
+        d_params['generator']['batch_norm'] = [bn, bn, bn, bn]
+        d_params['generator']['full'] = [64*md]
+        d_params['generator']['summary'] = True
+        d_params['generator']['non_lin'] = tf.nn.tanh
+        d_params['generator']['activation'] = tf.nn.relu
+        d_params['generator']['data_size'] = 1
+        d_params['generator']['spectral_norm'] = True 
+        d_params['generator']['in_conv_shape'] =[4]
+        d_params['generator']['borders'] = dict()
+        d_params['generator']['borders']['nfilter'] = [md, 2*md, 4*md, 8*md, 2*md]
+        d_params['generator']['borders']['batch_norm'] = [bn, bn, bn, bn, bn]
+        d_params['generator']['borders']['shape'] = [[25], [25], [25], [25], [25]]
+        d_params['generator']['borders']['stride'] = [4, 4, 4, 4, 4]
+        d_params['generator']['borders']['data_size'] = 1
+        d_params['generator']['borders']['width_full'] = 128
+        d_params['generator']['borders']['activation'] = tf.nn.relu
         return d_params
 
     def __init__(self, params, name='inpaint_gan'):
