@@ -47,10 +47,26 @@ def load_gan(savepath, model, system):
     return system(model, params)
 
 
+def scale2range(x, init, final):
+    if init[1] == init[0]:
+        return final[0]
+    return final[0] + (final[1] - final[0]) * (x - init[0]) / (init[1] - init[0])
 
-def sample_latent(m, n, prior="uniform", normalize=False):
+def sample_latent(m, n, prior="uniform", normalize=False, **kwargs):
     if prior == "uniform":
         return np.random.uniform(-1., 1., size=[m, n])
+    elif prior == "gaussian_scale":
+        z = np.vstack([np.random.normal(0, scale2range(kwargs['x'][i], kwargs['init_range'], kwargs['final_range']), size=[1, n]) for i in range(m)])
+        if normalize:
+            # Sample on the sphere
+            z = (z.T * np.sqrt(n / np.sum(z * z, axis=1))).T
+        return z
+    elif prior == "gaussian_length":
+        z = np.random.normal(0, 1, size=[m, n])
+        # Normalize such that the length encodes the parameter
+        scaled_vec = scale2range(kwargs['x'], kwargs['init_range'], kwargs['final_range'])
+        z = (z.T * np.sqrt((scaled_vec * scaled_vec) / np.sum(z * z, axis=1))).T
+        return z
     elif prior == "gaussian":
         z = np.random.normal(0, 1, size=[m, n])
         if normalize:
@@ -96,6 +112,7 @@ def sample_latent(m, n, prior="uniform", normalize=False):
     #     return simple_numpy(np.random.gamma(df, size=[m, n]), k)
     else:
         raise ValueError(' [!] distribution not defined')
+
 
 
 def show_all_variables():
@@ -188,6 +205,8 @@ def tile_cube_slices(cubes):
     return np.array(tiles)
 
 def get_closest_divisor(x):
+    if x==0:
+        return 0
     t = np.int(np.round(np.sqrt(x)))
     while np.mod(x, t):
         t += 1

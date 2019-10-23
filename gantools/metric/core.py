@@ -2,7 +2,7 @@
 
 import numpy as np
 import tensorflow as tf
-from gantools.plot.plot_summary import PlotSummaryLog, PlotSummaryPlot
+from gantools.plot.plot_summary import PlotSummaryLog, PlotSummaryPlot, PlotSummaryImages, PlotSummaryStandard
 from gantools.metric.fd import compute_fd
 
 class TFsummaryHelper(object):
@@ -27,8 +27,9 @@ class TFsummaryHelper(object):
                * 0 scalar
                * 1 image
                * 2 histogram
-               * 3 curves
+               * 3 two curves
                * 4 simple unique curve
+               * 5 two images, produces a subplot
         """
 
         name = self.group + '/' + self.name
@@ -50,10 +51,15 @@ class TFsummaryHelper(object):
             if self._log:
                 self._plot_summary = PlotSummaryLog(
                     self.name, self.group, collections=[collections])
+            else:
+                self._plot_summary = PlotSummaryStandard(
+                    self.name, self.group, collections=[collections])
         elif self.stype == 4:
             self._plot_summary = PlotSummaryPlot(
                 self.name, self.group, collections=[collections])
-
+        elif self.stype == 5:
+            self._placeholder = tf.placeholder(tf.float32, name=name)
+            self._plot_summary = PlotSummaryImages(self.name, self.group, collections=[collections])
         else:
             raise ValueError('Wrong summary type')
 
@@ -236,7 +242,7 @@ class StatisticalMetric(Metric):
 
     def compute_summary(self, fake, real, feed_dict={}):
         feed_dict = super().compute_summary(fake, real, feed_dict)
-        if self.stype == 3:
+        if self.stype == 3 or self.stype == 5:
             feed_dict = self._plot_summary.compute_summary(
                 self._saved_real_stat[1],
                 self._saved_real_stat[0],

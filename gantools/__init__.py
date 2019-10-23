@@ -4,3 +4,4 @@ from . import plot
 from . import utils
 from . import metric
 from . import data
+from . import regressor

@@ -2,7 +2,7 @@ import io
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
-from gantools.plot import audio
+from gantools.plot import audio, plot_img, plot_cmp
 # Inspired by Andres
 
 
@@ -78,6 +78,11 @@ class PlotSummaryLog(PlotSummary):
         ax.tick_params(axis='both', which='major', labelsize=10)
         ax.legend()
 
+class PlotSummaryStandard(PlotSummary):
+    def plot(self, x, real, fake):
+        super().plot()
+        plot_cmp(x, fake, real, xscale='linear', yscale='log', title=self._name)
+
 class PlotSummaryPlot(PlotSummary):
     def __init__(self, nx, ny, *args, **kwargs):
         self.nx = nx
@@ -103,3 +108,22 @@ class PlotSummaryPlot(PlotSummary):
         #         it += 1
 
 
+class PlotSummaryImages(PlotSummary):
+    def plot(self, x, real, fake):
+        super().plot()
+        vmin = np.min([np.min(real), np.min(fake)])
+        vmax = np.max([np.max(real), np.max(fake)])
+        fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(20, 10))
+        plot_img(real, x=x, ax=ax[0], title='Real', vmin=vmin, vmax=vmax)
+        plot_img(fake, x=x, ax=ax[1], title='Fake', vmin=vmin, vmax=vmax)
+
+
+def gen_img_buf(img, vmin, vmax):
+    plt.figure()
+    plt.imshow(img, vmin=vmin, vmax=vmax)
+    plt.axis('off')
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", bbox_inches='tight')
+    plt.close()
+    buf.seek(0)
+    return buf
