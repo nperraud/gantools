@@ -4,9 +4,12 @@ from numpy import prod
 from gantools import utils
 import scipy
 
+SEED = None
 
 def orthogonal_initializer(scale=1.1):
     """From Lasagne and Keras. Reference: Saxe et al., http://arxiv.org/abs/1312.6120
+    
+    This should not be used anymore... Use the new version from tensorflow...
     """
 
     def _initializer(shape, dtype=tf.float32, **kwargs):
@@ -26,7 +29,7 @@ def select_initializer(type='xavier'):
     if type=='orthogonal':
         return orthogonal_initializer()
     elif type=='xavier':
-        return tf.contrib.layers.xavier_initializer()
+        return tf.initializers.glorot_normal(seed=SEED)
     else:
         raise ValueError('Unknown initializer type.')
     return
@@ -78,16 +81,13 @@ def prelu(x, name="prelu"):
     return tf.keras.layers.PReLU(name=name)(x)
 
 
-def batch_norm(x, epsilon=1e-5, momentum=0.9, name="batch_norm", train=True):
+def batch_norm(x, axis=-1, epsilon=1e-3, momentum=0.99, name="batch_norm", train=True):
     with tf.variable_scope(name):
-        bn = tf.contrib.layers.batch_norm(
-            x,
-            decay=momentum,
+        bn = tf.keras.layers.BatchNormalization(axis=axis,
+            momentum=momentum,
             epsilon=epsilon,
-            scale=True,
-            is_training=train,
-            scope=name)
-        return bn
+            scale=True)
+    return bn(x, training=train)
 
 def get_fourier_sum_matrix(ns, dim):
     d = (np.arange(ns) - ns//2)**2
@@ -328,11 +328,11 @@ def up_sampler(x, s=2, size=None, smoothout=False):
     else:
         filt = tf.constant(1, dtype=tf.float32, shape=[s, 1, 1])
         output_shape = [bs, dims[0] * s, dims[1]]
-        return tf.contrib.nn.conv1d_transpose(
+        return tf.nn.conv1d_transpose(
             x,
             filt,
             output_shape=output_shape,
-            stride= s,
+            strides= s,
             padding='SAME')
 
 
@@ -516,11 +516,11 @@ def deconv1d(imgs,
             initializer=weights_initializer)
         if use_spectral_norm:
             w = spectral_norm(w)
-        deconv = tf.contrib.nn.conv1d_transpose(
+        deconv = tf.nn.conv1d_transpose(
             imgs,
             w,
             output_shape=output_shape,
-            stride=stride[0])
+            strides=stride[0])
 
         biases = _tf_variable(
             'biases', [output_shape[-1]], initializer=const)
