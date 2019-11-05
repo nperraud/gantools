@@ -200,8 +200,11 @@ class WGAN(BaseGAN):
 
             # gradient penalty
             gradients = tf.gradients(D_x_hat, x_hat)
-            norm_gradient_pen = tf.norm(gradients[0], ord=2)
+            bs = tf.cast(tf.shape(x_hat)[0], tf.float32)  # Batch size
+            norm_gradient_pen = tf.reduce_sum(tf.square(gradients[0]))/bs
             D_gp = gamma * tf.square(norm_gradient_pen - 1.0)
+#             norm_gradient_pen = tf.norm(gradients[0], ord=2)
+#             D_gp = gamma * tf.square(norm_gradient_pen - 1.0)
             tf.summary.scalar("Disc/GradPen", D_gp, collections=["train"])
             tf.summary.scalar("Disc/NormGradientPen", norm_gradient_pen, collections=["train"])
             print(" Using gradients penalty")
