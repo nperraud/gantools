@@ -25,9 +25,6 @@ class BaseGAN(BaseNet):
         super().__init__(params=params, name=name)
         self._loss = (self.D_loss, self.G_loss)
 
-    @property
-    def D_loss(self):
-        return self._D_loss
 
     @property
     def D_loss(self):
@@ -327,7 +324,7 @@ class WGAN(BaseGAN):
         d['X_real'] = self.assert_image(batch)
         d['z'] = self.sample_latent(len(batch))
         return d
-
+    
     @property
     def data_size(self):
         return self._data_size
