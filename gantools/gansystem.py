@@ -8,7 +8,7 @@ from copy import deepcopy
 import yaml
 from gantools.metric import ganlist
 from gantools import blocks
-from tfnntools.nnsystem import NNSystem
+from tfnntools.nnsystem import NNSystem, tf_config
 
 class GANsystem(NNSystem):
     """General GAN System class.
@@ -228,7 +228,7 @@ class GANsystem(NNSystem):
             # print("Not loading a checkpoint")
 
         else:
-            self._sess = tf.Session()
+            self._sess = tf.Session(config=tf_config)
             res = self.load(checkpoint=checkpoint)
             if res:
                 print("Checkpoint succesfully loaded!")
@@ -281,7 +281,7 @@ class GANsystem(NNSystem):
             self._sess = sess
             print("Not loading a checkpoint")
         else:
-            self._sess = tf.Session()
+            self._sess = tf.Session(config=tf_config)
             res = self.load(checkpoint=checkpoint)
             if res:
                 print("Checkpoint succesfully loaded!")
@@ -305,7 +305,7 @@ class GANsystem(NNSystem):
             self._sess = sess
             print("Not loading a checkpoint")
         else:
-            self._sess = tf.Session()
+            self._sess = tf.Session(config=tf_config)
             res = self.load(checkpoint=checkpoint)
             if res:
                 print("Checkpoint succesfully loaded!")
@@ -392,7 +392,7 @@ class DualGANsystem(GANsystem):
     def calculate_metrics(self):
 
         if self._sess is None:
-            self._sess = tf.Session()
+            self._sess = tf.Session(config=tf_config)
             sess_to_be_closed = True
         else:
             sess_to_be_closed = False
@@ -503,7 +503,7 @@ class UpscaleGANsystem(GANsystem):
 
         # If no session passed, create a new one and load a checkpoint.
         if sess is None:
-            new_sess = tf.Session()
+            new_sess = tf.Session(config=tf_config)
             res = self.load(sess=new_sess, checkpoint=checkpoint)
             if res:
                 print('Checkpoint successfully loaded!')
