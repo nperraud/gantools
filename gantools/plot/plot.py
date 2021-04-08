@@ -378,11 +378,13 @@ def plot_cmp(x, fake, real=None, xscale='linear', yscale='log', xlabel="", ylabe
         plot_fractional_difference(x, real, fake, xscale=xscale, yscale='linear', ax=ax, color='g', ylim=ylim[1] if isinstance(ylim, list) else None, algorithm=algorithm, loc=loc)
         
 # Plot an image
-def plot_img(img, x=None, title="", ax=None, cmap=plt.cm.plasma, vmin=None, vmax=None, tick_every=10, colorbar=False, log_norm=False):
+def plot_img(img, x=None, title="", ax=None, cmap=plt.cm.plasma, vmin=None, vmax=None, tick_every=10, colorbar=False, log_norm=False, kwargs_imshow=None):
+    if kwargs_imshow is None:
+        kwargs_imshow = {}
     if ax is None:
         ax = plt.gca()
     img = np.squeeze(img)
-    im = ax.imshow(img, cmap=cmap, vmin=vmin, vmax=vmax, norm=LogNorm() if log_norm else None)
+    im = ax.imshow(img, cmap=cmap, vmin=vmin, vmax=vmax, norm=LogNorm() if log_norm else None, **kwargs_imshow)
     ax.set_title(title)
     ax.title.set_fontsize(16)
     if x is not None:
